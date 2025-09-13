@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายการสินค้าที่สั่ง</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        .back-btn {
+            margin-top: 18px;
+            background: #f3f4f6;
+            color: #374151;
+            border: 1.5px solid #a5b4fc;
+            transition: background 0.2s, color 0.2s;
+        }
+        .back-btn:hover {
+            background: #6366f1;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="order-bg">
+        <div id="orderRoot" class="order-container">
+            <h2>
+                <span class="order-icon">🛒</span>
+                รายการสินค้าที่สั่งโดย <span id="customerName"></span>
+            </h2>
+            <div class="order-list" id="orderList">
+                <!-- สินค้าจะถูกแสดงที่นี่ -->
+            </div>
+            <button type="button" class="admin-btn back-btn" onclick="window.location.href='index.html'">กลับหน้าหลัก</button>
+        </div>
+    </div>
+    <script>
+        // ดึงชื่อจาก query string
+        const params = new URLSearchParams(window.location.search);
+        const customer = params.get('name') || '-';
+        document.getElementById('customerName').textContent = customer;
+
+        // ดึงข้อมูลสินค้า
+        let orders = JSON.parse(localStorage.getItem('orders') || '{}');
+        let list = orders[customer] || [];
+        let html = '';
+        if(list.length === 0) {
+            html = '<div style="text-align:center;color:#e11d48;font-size:1.3rem;font-weight:600;">หว่ายยยยม่ายมี</div>';
+        } else {
+            for(const item of list) {
+                html += `
+                <div class="order-item">
+                    <img src="${item.img}" alt="${item.name}">
+                    <div class="order-detail">
+                        <div class="order-title">${item.name}</div>
+                        <a href="${item.link}" target="_blank" class="order-link">ลิ้งค์สินค้า</a>
+                    </div>
+                </div>`;
+            }
+        }
+        document.getElementById('orderList').innerHTML = html;
+    </script>
+</body>
+</html>

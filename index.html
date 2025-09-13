@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ติดตามสินค้า</title>
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+    <div id="root">
+        <!-- รูปภาพตรงกลาง -->
+        <img 
+            src="https://media.tenor.com/OldgYBt29-YAAAAj/minori-chibi-project-sekai.gif" 
+            alt="Minori Chibi" 
+            id="centerImage"
+        />
+        <!-- ช่องค้นหาชื่อเฟส -->
+        <form id="searchForm">
+            <label for="facebookName">พิมพ์ชื่อ FB: - X:(ใส่@แอดด้วย): </label>
+            <input type="text" id="facebookName" name="facebookName" placeholder="กรอกชื่อเฟสบุ๊ค">
+            <button type="submit">ค้นหา</button>
+        </form>
+        <div id="searchResult"></div>
+    </div>
+    <script src="src/App.js" type="module"></script>
+    <script>
+        document.getElementById('searchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('facebookName').value.trim();
+            if(name) {
+                window.location.href = `order-list.html?name=${encodeURIComponent(name)}`;
+            }
+        });
+    </script>
+</body>
+</html>
