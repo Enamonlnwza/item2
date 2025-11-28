@@ -1,0 +1,318 @@
+:root{
+    --bg-start: #eef2ff;
+    --bg-end: #f8fafc;
+    --primary: #6366f1;
+    --accent: #60a5fa;
+    --muted: #94a3b8;
+    --glass: rgba(255,255,255,0.7);
+}
+
+body, html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', 'Prompt', Arial, sans-serif;
+    background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+    -webkit-font-smoothing:antialiased;
+}
+
+#root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#centerImage {
+    display: block;
+    margin: 0 auto 28px auto;
+    width: 160px;
+    height: auto;
+    border-radius: 18px;
+    box-shadow: 0 8px 30px rgba(99,102,241,0.12);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+#centerImage:hover{ transform: translateY(-6px) scale(1.03); box-shadow: 0 12px 36px rgba(99,102,241,0.14); }
+
+#searchForm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    background: #fff;
+    padding: 40px 48px 32px 48px;
+    border-radius: 20px;
+    box-shadow: 0 12px 48px rgba(2,6,23,0.06);
+    border: 1px solid rgba(99,102,241,0.08);
+}
+
+#searchForm label {
+    font-size: 1.4rem;
+    color: #374151;
+    margin-bottom: 8px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+#facebookName {
+    width: 360px;
+    height: 52px;
+    font-size: 1.15rem;
+    padding: 0 18px;
+    border-radius: 10px;
+    border: 1.5px solid rgba(99,102,241,0.18);
+    background: linear-gradient(180deg,#fbfdff,#f6f9ff);
+    transition: border 0.2s;
+    outline: none;
+}
+
+#facebookName:focus {
+    border: 2px solid #6366f1;
+    background: #fff;
+}
+
+#searchForm button {
+    width: 160px;
+    height: 46px;
+    font-size: 1.1rem;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(99,102,241,0.08);
+    transition: background 0.2s, transform 0.1s;
+}
+
+#searchForm button:hover {
+    background: linear-gradient(90deg, #4f46e5 0%, #2563eb 100%);
+    transform: translateY(-2px) scale(1.03);
+}
+
+#searchResult {
+    margin-top: 28px;
+    font-size: 1.1rem;
+    color: #374151;
+    min-height: 32px;
+    text-align: center;
+}
+
+.order-bg {
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.order-container {
+    background: #fff;
+    padding: 40px 36px 32px 36px;
+    border-radius: 22px;
+    box-shadow: 0 18px 60px rgba(2,6,23,0.08);
+    min-width: 380px;
+    max-width: 480px;
+    width: 100%;
+}
+
+#orderRoot h2 {
+    font-size: 1.5rem;
+    color: #374151;
+    margin-bottom: 32px;
+    text-align: center;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.order-icon {
+    font-size: 1.6rem;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+.order-list {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.order-item {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    background: #f1f5f9;
+    padding: 18px 20px;
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(2,6,23,0.04);
+    transition: box-shadow 0.2s, transform 0.1s;
+}
+
+.order-item:hover {
+    box-shadow: 0 6px 24px rgba(99,102,241,0.13);
+    transform: translateY(-2px) scale(1.01);
+}
+
+.order-item img {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1.5px solid rgba(99,102,241,0.16);
+    background: linear-gradient(180deg,#fff,#fbfdff);
+}
+
+.order-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.order-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #4f46e5;
+    margin-bottom: 2px;
+}
+
+.order-link {
+    color: #2563eb;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: color 0.2s;
+    font-weight: 500;
+}
+
+.order-link:hover {
+    color: #1e40af;
+    text-decoration: underline;
+}
+
+.admin-container {
+    max-width: 420px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 18px 60px rgba(2,6,23,0.06);
+    padding: 36px 32px 28px 32px;
+}
+
+.admin-title {
+    text-align: center;
+    font-size: 1.5rem;
+    color: #374151;
+    margin-bottom: 28px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.admin-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.admin-input {
+    height: 46px;
+    border-radius: 10px;
+    border: 1.5px solid #a5b4fc;
+    background: #f1f5f9;
+    font-size: 1.08rem;
+    padding: 0 16px;
+    transition: border 0.2s;
+    outline: none;
+}
+
+.admin-input:focus {
+    border: 2px solid #6366f1;
+    background: #fff;
+}
+
+.admin-btn {
+    height: 46px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(90deg, #6366f1 0%, #60a5fa 100%);
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(99,102,241,0.08);
+    transition: background 0.2s, transform 0.1s;
+}
+
+.admin-btn.small{ height:36px; padding:0 12px; font-size:0.95rem }
+
+.admin-btn:hover {
+    background: linear-gradient(90deg, #4f46e5 0%, #2563eb 100%);
+    transform: translateY(-2px) scale(1.03);
+}
+
+.admin-msg {
+    margin-top: 18px;
+    text-align: center;
+    color: #22c55e;
+    font-weight: 600;
+    font-size: 1.08rem;
+    min-height: 24px;
+}
+
+/* Hedgehog admin button (top-right) */
+#hedgehogBtn {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    border: none;
+    background: rgba(255,255,255,0.9);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+    font-size: 1.6rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    z-index: 9999;
+}
+
+#hedgehogBtn:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+#hedgehogBtn:focus {
+    outline: 3px solid rgba(99,102,241,0.18);
+    outline-offset: 2px;
+}
+
+/* modal */
+.modal-backdrop{ position:fixed; inset:0; background:rgba(2,6,23,0.45); display:flex; align-items:center; justify-content:center; z-index:10000 }
+.modal{ background:var(--glass); backdrop-filter: blur(6px); padding:18px 20px; border-radius:12px; max-width:420px; width:94%; box-shadow:0 20px 60px rgba(2,6,23,0.4); border:1px solid rgba(255,255,255,0.6) }
+.modal h3{ margin:0 0 8px 0; font-size:1.15rem }
+.modal p{ margin:0 0 12px 0; color:var(--muted) }
+.modal .actions{ display:flex; gap:10px; justify-content:flex-end }
+
+/* snackbar / undo */
+.snackbar{ position:fixed; left:50%; transform:translateX(-50%); bottom:24px; background:#111827; color:#fff; padding:12px 16px; border-radius:10px; box-shadow:0 8px 30px rgba(2,6,23,0.3); display:flex; gap:12px; align-items:center; z-index:10001 }
+.snackbar .action{ background:transparent; border:1px solid rgba(255,255,255,0.16); color:#fff; padding:6px 10px; border-radius:8px; cursor:pointer }
+
+/* small responsive tweaks */
+@media (max-width:520px){
+    #facebookName{ width:calc(100vw - 80px) }
+    .order-container{ padding:28px 20px }
+    #centerImage{ width:120px }
+}
+
+/* subtle entrance */
+.fade-in{ animation: fadeIn 360ms ease both }
+@keyframes fadeIn{ from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none} }
+
+/* contact links on index page */
+.contact-row{ margin-top:22px; display:flex; gap:12px; align-items:center; justify-content:center; }
+.contact-link{ display:inline-flex; gap:8px; align-items:center; padding:8px 12px; border-radius:10px; background:linear-gradient(180deg,#fff,#fbfdff); border:1px solid rgba(99,102,241,0.06); box-shadow:0 6px 18px rgba(2,6,23,0.04); color:var(--primary); text-decoration:none; font-weight:600 }
+.contact-link:hover{ transform:translateY(-3px); box-shadow:0 12px 30px rgba(2,6,23,0.08) }
+.contact-icon{ font-size:1.15rem }

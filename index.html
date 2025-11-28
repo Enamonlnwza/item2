@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ติดตามสินค้าให้เหมือนเจ้ากรรมนายเวร</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="root">
+        <!-- รูปภาพตรงกลาง -->
+        <img 
+            src="../../minori-chibi-project-sekai.gif" 
+            alt="Minori Chibi" 
+            id="centerImage"
+        />
+        <!-- ช่องค้นหาชื่อเฟส -->
+        <form id="searchForm">
+            <label for="facebookName">พิมพ์ชื่อ FB: - X:(ใส่@แอดด้วย): </label>
+            <input type="text" id="facebookName" name="facebookName" placeholder="กรอกชื่อเฟสบุ๊ค">
+            <button type="submit">ค้นหา</button>
+        </form>
+            <!-- tracking input removed as requested -->
+        <div id="searchResult"></div>
+
+        <!-- ช่องทางติดต่อด้านล่าง -->
+        <div class="contact-row">
+            <a class="contact-link" href="https://web.facebook.com/xe.na.mxn.sud.swy.hma.hlud.cak.pak" target="_blank" rel="noopener" aria-label="Facebook">
+                <span class="contact-icon">📘</span>
+                <span>Facebook</span>
+            </a>
+            <a class="contact-link" href="https://x.com/NMizora/media" target="_blank" rel="noopener" aria-label="X">
+                <span class="contact-icon">✖️</span>
+                <span>X (formerly Twitter)</span>
+            </a>
+        </div>
+
+    <!-- recent customers quick links -->
+    <div id="recentCustomers" style="margin-top:18px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap"></div>
+    
+    <!-- history access -->
+    <div style="display:flex; justify-content:center; margin-top:12px;">
+        <button id="historyBtn" class="admin-btn small" style="background:linear-gradient(90deg,#10b981,#34d399);">ประวัติสั่งซื้อ</button>
+    </div>
+
+    <!-- modal to ask for account name -->
+    <div id="historyModal" style="display:none; position:fixed; inset:0; align-items:center; justify-content:center; background:rgba(0,0,0,0.45); z-index:10000">
+        <div style="background:#fff; padding:18px; border-radius:12px; width:320px; max-width:92%; box-shadow:0 12px 40px rgba(0,0,0,0.25)">
+            <h3 style="margin:0 0 8px 0">ดูประวัติการสั่งซื้อ</h3>
+            <div style="color:var(--muted); margin-bottom:8px">กรุณากรอกชื่อบัญชี/แอคที่ใช้สั่งซื้อด้วยครับ</div>
+            <input id="historyName" class="admin-input" placeholder="ชื่อบัญชี (ตัวอย่าง: ชื่อเฟส)" style="width:100%; margin-bottom:10px;" />
+            <div style="display:flex; gap:8px; justify-content:flex-end">
+                <button id="historyCancel" class="admin-btn small back-btn" type="button">ยกเลิก</button>
+                <button id="historySubmit" class="admin-btn small" type="button">ดูประวัติ</button>
+            </div>
+            <div id="historyErr" style="color:#ef4444; margin-top:8px; display:none"></div>
+        </div>
+    </div>
+    </div>
+    <!-- ปุ่มอิโมจิเม่นแคระที่มุมขวาบน -->
+    <button id="hedgehogBtn" aria-label="Admin access">🦔</button>
+    <script src="src/App.js" type="module"></script>
+    <script>
+            // tracking input removed — no carrier detection or redirect on this page
+
+        // Admin access hedgehog button
+        (function() {
+            const adminPassword = 'mizora2004';
+            const btn = document.getElementById('hedgehogBtn');
+            if(!btn) return;
+            btn.addEventListener('click', function() {
+                const attempt = prompt('กรุณากรอกรหัสเพื่อเข้าหน้าผู้ดูแล:');
+                if(attempt === null) return; // user cancelled
+                if(attempt === adminPassword) {
+                    // redirect to admin page
+                    window.location.href = 'admin.html';
+                } else {
+                    alert('รหัสไม่ถูกต้องเอาใหม่');
+                }
+            });
+        })();
+
+        document.getElementById('searchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('facebookName').value.trim();
+            if(name) {
+                window.location.href = `order-list.html?name=${encodeURIComponent(name)}`;
+            }
+        });
+
+        // Populate recent customers (keys from localStorage orders)
+        (function(){
+            const recentEl = document.getElementById('recentCustomers');
+            const orders = JSON.parse(localStorage.getItem('orders') || '{}');
+            const names = Object.keys(orders).slice(0,12);
+            if(names.length === 0) {
+                recentEl.style.display = 'none';
+                return;
+            }
+            names.forEach(n => {
+                const a = document.createElement('a');
+                a.className = 'contact-link';
+                a.style.padding = '8px 10px';
+                a.href = `order-list.html?name=${encodeURIComponent(n)}`;
+                a.textContent = n;
+                recentEl.appendChild(a);
+            });
+        })();
+
+        // history modal logic
+        const historyBtn = document.getElementById('historyBtn');
+        const historyModal = document.getElementById('historyModal');
+        const historyCancel = document.getElementById('historyCancel');
+        const historySubmit = document.getElementById('historySubmit');
+        const historyName = document.getElementById('historyName');
+        const historyErr = document.getElementById('historyErr');
+
+        historyBtn.addEventListener('click', function(){ historyErr.style.display='none'; historyName.value=''; historyModal.style.display='flex'; historyName.focus(); });
+        historyCancel.addEventListener('click', function(){ historyModal.style.display='none'; });
+        historyModal.addEventListener('click', function(e){ if(e.target === historyModal) historyModal.style.display='none'; });
+
+        historySubmit.addEventListener('click', function(){
+            const name = historyName.value.trim();
+            if(!name){ historyErr.textContent='กรุณากรอกชื่อบัญชี'; historyErr.style.display='block'; return; }
+            const orders = JSON.parse(localStorage.getItem('orders') || '{}');
+            const delivered = JSON.parse(localStorage.getItem('deliveredOrders') || '{}');
+            if((orders && orders[name] && orders[name].length>0) || (delivered && delivered[name] && delivered[name].length>0)){
+                // redirect to history page filtered
+                window.location.href = `history.html?name=${encodeURIComponent(name)}`;
+            } else {
+                historyErr.textContent = 'ไม่พบประวัติ'; historyErr.style.display='block';
+            }
+        });
+        historyCancel.addEventListener('click', function(){ historyModal.style.display='none'; });
+        historyName.addEventListener('input', function(){ historyErr.style.display='none'; });
+    </script>
+</body>
+</html>

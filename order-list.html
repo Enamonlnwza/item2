@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายการสินค้าที่สั่ง</title>
+    <link rel="stylesheet" href="main.css">
+    <style>
+        .back-btn {
+            margin-top: 18px;
+            background: #f3f4f6;
+            color: #374151;
+            border: 1.5px solid #a5b4fc;
+            transition: background 0.2s, color 0.2s;
+        }
+        .back-btn:hover {
+            background: #6366f1;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="order-bg">
+        <div id="orderRoot" class="order-container">
+            <h2>
+                <span class="order-icon">🛒</span>
+                รายการสินค้าที่สั่งโดย <span id="customerName"></span>
+            </h2>
+            <div class="order-list" id="orderList">
+                <!-- สินค้าจะถูกแสดงที่นี่ -->
+            </div>
+            <!-- image preview modal -->
+            <div id="imgModal" style="display:none; position:fixed; inset:0; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); z-index:10000">
+                <img id="modalImg" src="" alt="preview" style="max-width:90%; max-height:80%; border-radius:10px; box-shadow:0 12px 40px rgba(0,0,0,0.5)">
+            </div>
+            <button type="button" class="admin-btn back-btn" onclick="window.location.href='index.html'">กลับหน้าหลัก</button>
+        </div>
+    </div>
+    <script>
+        // ดึงชื่อจาก query string
+        const params = new URLSearchParams(window.location.search);
+        const customer = params.get('name') || '-';
+        document.getElementById('customerName').textContent = customer;
+
+        // render list function (so we can re-render after updates)
+        function renderList(){
+            const orders = JSON.parse(localStorage.getItem('orders') || '{}');
+            const list = orders[customer] || [];
+            const container = document.getElementById('orderList');
+            if(!list || list.length === 0){
+                container.innerHTML = '<div style="text-align:center;color:#e11d48;font-size:1.3rem;font-weight:600;">หว่ายยยยม่ายมี</div>';
+                return;
+            }
+            let html = '';
+            list.forEach((item, idx) => {
+                const safeLink = item.link || '#';
+                const status = item.status || 'รอจัดส่ง';
+                html += `
+                <div class="order-item" data-idx="${idx}">
+                    <img src="${item.img}" alt="${item.name}" class="clickable-img" data-src="${item.img}">
+                    <div class="order-detail">
+                        <div class="order-title">${item.name}</div>
+                        <div style="display:flex; gap:8px; align-items:center; margin-top:6px">
+                            <a href="${safeLink}" target="_blank" class="order-link">ลิ้งค์สินค้า</a>
+                            <button class="admin-btn small copy-link" data-link="${safeLink}" type="button">คัดลอกลิงก์</button>
+                            <div style="margin-left:8px; color:var(--muted); font-size:0.95rem">สถานะ: <strong class="status-text">${status}</strong></div>
+                            <button class="admin-btn small mark-received" data-idx="${idx}" type="button">ได้รับของแล้ว</button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+
+            // wire up copy buttons and image modal
+            document.querySelectorAll('.copy-link').forEach(btn => {
+                btn.addEventListener('click', async function(){
+                    const link = this.dataset.link || '';
+                    try{ await navigator.clipboard.writeText(link); alert('คัดลอกลิงก์เรียบร้อย'); }
+                    catch(e){ prompt('คัดลอกลิงก์:', link); }
+                });
+            });
+            const imgModal = document.getElementById('imgModal');
+            const modalImg = document.getElementById('modalImg');
+            document.querySelectorAll('.clickable-img').forEach(img => {
+                img.style.cursor = 'zoom-in';
+                img.addEventListener('click', function(){
+                    modalImg.src = this.dataset.src || this.src;
+                    imgModal.style.display = 'flex';
+                });
+            });
+            imgModal.addEventListener('click', function(){ imgModal.style.display = 'none'; modalImg.src = ''; });
+
+            // mark received handlers
+            document.querySelectorAll('.mark-received').forEach(btn => {
+                btn.addEventListener('click', function(){
+                    const idx = parseInt(this.dataset.idx, 10);
+                    if(!confirm('ยืนยันว่ารับของแล้วสำหรับรายการนี้?')) return;
+                    let orders = JSON.parse(localStorage.getItem('orders') || '{}');
+                    if(!orders[customer] || !orders[customer][idx]) return alert('ไม่พบรายการ');
+                    const item = orders[customer].splice(idx,1)[0];
+                    if(orders[customer].length === 0) delete orders[customer];
+                    localStorage.setItem('orders', JSON.stringify(orders));
+
+                    // append to deliveredOrders
+                    const delivered = JSON.parse(localStorage.getItem('deliveredOrders') || '{}');
+                    if(!delivered[customer]) delivered[customer] = [];
+                    // mark status as received when moving
+                    const migrated = Object.assign({}, item, { deliveredAt: Date.now(), status: 'ได้รับแล้ว' });
+                    delivered[customer].push(migrated);
+                    localStorage.setItem('deliveredOrders', JSON.stringify(delivered));
+
+                    // re-render
+                    renderList();
+                    alert('ยืนยันการรับของแล้ว รายการจะถูกย้ายไปยังประวัติการสั่งซื้อ');
+                });
+            });
+        }
+
+        // initial render
+        renderList();
+    </script>
+</body>
+</html>

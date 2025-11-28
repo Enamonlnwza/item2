@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ประวัติการสั่งซื้อ - ประวัติพัสดุ</title>
+    <link rel="stylesheet" href="main.css">
+    <style>
+        .group { margin-bottom:16px }
+        .group h3{ margin:0 0 8px 0 }
+    </style>
+</head>
+<body>
+    <div class="order-bg">
+        <div class="order-container admin-container">
+            <h2 class="admin-title">ประวัติการสั่งซื้อ (ได้รับแล้ว)</h2>
+
+            <div id="historyRoot"></div>
+
+            <div style="margin-top:18px; display:flex; gap:8px; justify-content:flex-end">
+                <button class="admin-btn back-btn" onclick="window.location.href='index.html'">กลับ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- image preview modal -->
+    <div id="imgModal" style="display:none; position:fixed; inset:0; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); z-index:10000">
+        <img id="modalImg" src="" alt="preview" style="max-width:90%; max-height:80%; border-radius:10px; box-shadow:0 12px 40px rgba(0,0,0,0.5)">
+    </div>
+
+    <script>
+        // Read name param
+        const params = new URLSearchParams(window.location.search);
+        const name = params.get('name') || '';
+        const root = document.getElementById('historyRoot');
+        if(!name){
+            root.innerHTML = '<div style="text-align:center; color:var(--muted)">กรุณาเข้าจากปุ่ม "ประวัติสั่งซื้อ" แล้วกรอกชื่อบัญชีที่ใช้สั่งซื้อเพื่อดูประวัติ</div>'; 
+        } else {
+            const orders = JSON.parse(localStorage.getItem('orders') || '{}');
+            const delivered = JSON.parse(localStorage.getItem('deliveredOrders') || '{}');
+            const pending = (orders[name] && orders[name].length) ? orders[name] : [];
+            const done = (delivered[name] && delivered[name].length) ? delivered[name] : [];
+
+            if(pending.length === 0 && done.length === 0){
+                root.innerHTML = `<div style="text-align:center; color:var(--muted)">ไม่พบประวัติการสั่งซื้อสำหรับ "${name}"</div>`;
+            } else {
+                // pending
+                if(pending.length > 0){
+                    const g1 = document.createElement('div'); g1.className='group';
+                    g1.innerHTML = `<h3>รายการที่ยังไม่ได้รับ (${pending.length})</h3>`;
+                    const box1 = document.createElement('div');
+                        pending.forEach(item => {
+                            const status = item.status || 'รอจัดส่ง';
+                            const itemEl = document.createElement('div'); itemEl.className='order-item';
+                            itemEl.innerHTML = `
+                                <img src="${item.img}" alt="${item.name}" class="clickable-img" data-src="${item.img}">
+                                <div class="order-detail">
+                                    <div class="order-title">${item.name}</div>
+                                    <div style="margin-top:8px">สถานะ: <strong class="status-text">${status}</strong></div>
+                                    <div style="margin-top:8px"><a href="${item.link || '#'}" target="_blank" class="order-link">ลิ้งค์สินค้า</a></div>
+                                </div>
+                            `;
+                            box1.appendChild(itemEl);
+                        });
+                    g1.appendChild(box1);
+                    root.appendChild(g1);
+                }
+
+                // delivered
+                if(done.length > 0){
+                    const g2 = document.createElement('div'); g2.className='group';
+                    g2.innerHTML = `<h3>รายการที่ได้รับแล้ว (${done.length})</h3>`;
+                    const box2 = document.createElement('div');
+                    done.forEach(item => {
+                        const deliveredAt = item.deliveredAt ? new Date(item.deliveredAt).toLocaleString() : '-';
+                        const status = item.status || 'ได้รับแล้ว';
+                        const itemEl = document.createElement('div'); itemEl.className = 'order-item';
+                        itemEl.innerHTML = `
+                            <img src="${item.img}" alt="${item.name}" class="clickable-img" data-src="${item.img}">
+                            <div class="order-detail">
+                                <div class="order-title">${item.name}</div>
+                                <div style="color:var(--muted); font-size:0.95rem">ได้รับเมื่อ: ${deliveredAt}</div>
+                                <div style="margin-top:8px">สถานะ: <strong class="status-text">${status}</strong></div>
+                                <div style="margin-top:8px"><a href="${item.link || '#'}" target="_blank" class="order-link">ลิ้งค์สินค้า</a></div>
+                            </div>
+                        `;
+                        box2.appendChild(itemEl);
+                    });
+                    g2.appendChild(box2);
+                    root.appendChild(g2);
+                }
+            }
+        }
+
+        // image modal (works for dynamically inserted images)
+        const imgModal = document.getElementById('imgModal');
+        const modalImg = document.getElementById('modalImg');
+        document.addEventListener('click', function(e){
+            const t = e.target;
+            if(t && t.classList && t.classList.contains('clickable-img')){
+                modalImg.src = t.dataset.src || t.src;
+                imgModal.style.display = 'flex';
+            }
+        });
+        imgModal.addEventListener('click', function(){ modalImg.src=''; imgModal.style.display='none'; });
+    </script>
+</body>
+</html>

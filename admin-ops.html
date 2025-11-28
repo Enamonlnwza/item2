@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Operations</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div class="order-bg">
+        <div class="order-container admin-container">
+            <h2 class="admin-title">แผงจัดการ (ยกเลิก / แก้ไข)</h2>
+
+            <label for="selectCustomer">เลือกชื่อลูกค้าที่ต้องการจัดการ</label>
+            <input id="filterCustomer" class="admin-input" placeholder="กรองชื่อลูกค้า (พิมพ์เพื่อค้นหา)">
+            <select id="selectCustomer" class="admin-input"></select>
+
+            <div id="ordersList" style="margin-top:18px"></div>
+
+            <div style="display:flex; gap:12px; margin-top:18px;">
+                <button id="cancelBtn" class="admin-btn" type="button">ยกเลิกรายการที่เลือก</button>
+                <button id="toggleEditBtn" class="admin-btn" type="button">เข้าสู่โหมดแก้ไข</button>
+            </div>
+
+            <div id="opsMsg" class="admin-msg"></div>
+
+            <button type="button" class="admin-btn back-btn" onclick="window.location.href='admin.html'">กลับไปหน้าเพิ่มสินค้า</button>
+            <button type="button" class="admin-btn back-btn" onclick="window.location.href='index.html'">กลับไปหน้าแรก</button>
+        </div>
+    </div>
+
+    <!-- Confirm modal -->
+    <div id="confirmModal" class="modal-backdrop" style="display:none">
+        <div class="modal">
+            <h3>ยืนยันการยกเลิก</h3>
+            <p id="confirmText">คุณต้องการยกเลิกรายการนี้หรือไม่? การกระทำนี้สามารถย้อนกลับได้ชั่วคราว</p>
+            <div class="actions">
+                <button id="confirmCancel" class="admin-btn small" type="button">ยกเลิก</button>
+                <button id="confirmOk" class="admin-btn small" type="button">ยืนยัน</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- snackbar / undo -->
+    <div id="snackbar" class="snackbar" style="display:none">
+        <div id="snackText">ยกเลิกรายการเรียบร้อย</div>
+        <button id="undoBtn" class="action">ยกเลิกการลบ</button>
+    </div>
+
+    <script>
+        // Load customers from localStorage and populate select
+        function loadCustomers() {
+            const orders = JSON.parse(localStorage.getItem('orders') || '{}');
+            const select = document.getElementById('selectCustomer');
+            select.innerHTML = '';
+            const keys = Object.keys(orders);
+            if (keys.length === 0) {
+                const opt = document.createElement('option');
+                opt.textContent = 'ไม่มีข้อมูลลูกค้า';
+                opt.value = '';
+                select.appendChild(opt);
+                renderOrders([]);
+                return;
+            }
+            keys.forEach(k => {
+                const opt = document.createElement('option');
+                opt.value = k;
+                opt.textContent = k;
+                select.appendChild(opt);
+            });
+            renderOrders(orders[select.value] || []);
+        }
+
+        function renderOrders(list) {
+            const container = document.getElementById('ordersList');
+            container.innerHTML = '';
+            if (!list || list.length === 0) {
+                container.textContent = 'ไม่มีรายการสำหรับลูกค้าคนนี้';
+                return;
+            }
+            list.forEach((o, idx) => {
+                const el = document.createElement('div');
+                el.className = 'order-item';
+                const status = o.status || 'รอจัดส่ง';
+                el.innerHTML = `
+                    <img src="${o.img || 'https://via.placeholder.com/100'}" alt="img">
+                    <div class="order-detail">
+                        <div class="order-title">${o.name}</div>
+                        <a class="order-link" href="${o.link}" target="_blank">ลิ้งค์สินค้า</a>
+                        <div style="margin-top:6px; color:var(--muted); font-size:0.95rem">สถานะ: <span class="status-text">${status}</span>
+                            <input class="status-input" data-idx="${idx}" type="text" placeholder="พิมพ์สถานะ" style="display:none; margin-left:8px; padding:4px 6px; border-radius:6px; border:1px solid #ddd;">
+                        </div>
+                    </div>
+                    <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
+                        <input type="radio" name="selectedOrder" value="${idx}" aria-label="เลือกรายการ">
+                        <button class="admin-btn small edit-btn" data-idx="${idx}" style="display:none;">แก้ไข</button>
+                    </div>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        document.getElementById('selectCustomer').addEventListener('change', function() {
+            const orders = JSON.parse(localStorage.getItem('orders') || '{}');
+            renderOrders(orders[this.value] || []);
+        });
+
+        // filter customer list by input
+        document.getElementById('filterCustomer').addEventListener('input', function(){
+            const q = this.value.trim().toLowerCase();
+            const orders = JSON.parse(localStorage.getItem('orders') || '{}');
+            const select = document.getElementById('selectCustomer');
+            select.innerHTML = '';
+            Object.keys(orders).filter(k => k.toLowerCase().includes(q)).forEach(k => {
+                const opt = document.createElement('option'); opt.value = k; opt.textContent = k; select.appendChild(opt);
+            });
+            renderOrders(orders[select.value] || []);
+        });
+
+        // keyboard shortcut: press 'e' to toggle edit mode
+        document.addEventListener('keydown', function(ev){
+            if(ev.key === 'e' || ev.key === 'E'){
+                ev.preventDefault();
+                document.getElementById('toggleEditBtn').click();
+            }
+        });
+
+        // cancel flow uses modal + undo
+        let lastDeleted = null; // { customer, item, idx }
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmText = document.getElementById('confirmText');
+        const snackbar = document.getElementById('snackbar');
+        const snackText = document.getElementById('snackText');
+
+        document.getElementById('cancelBtn').addEventListener('click', function() {
+            const select = document.getElementById('selectCustomer');
+            const customer = select.value;
+            if (!customer) return alert('กรุณาเลือกชื่อลูกค้าก่อน');
+            const radios = document.getElementsByName('selectedOrder');
+            let chosen = -1;
+            for (const r of radios) if (r.checked) chosen = parseInt(r.value, 10);
+            if (chosen === -1) return alert('กรุณาเลือกหนึ่งรายการเพื่อยกเลิก');
+            let orders = JSON.parse(localStorage.getItem('orders') || '{}');
+            if (!orders[customer] || !orders[customer][chosen]) return alert('ไม่พบรายการ');
+            // show modal
+            confirmText.textContent = `ยืนยันยกเลิกรายการ "${orders[customer][chosen].name}" ของ ${customer} ?`;
+            confirmModal.style.display = 'flex';
+            // store selection temporarily on the modal confirm button dataset
+            document.getElementById('confirmOk').dataset.customer = customer;
+            document.getElementById('confirmOk').dataset.idx = chosen;
+        });
+
+        document.getElementById('confirmCancel').addEventListener('click', function(){
+            confirmModal.style.display = 'none';
+        });
+
+        document.getElementById('confirmOk').addEventListener('click', function(){
+            const customer = this.dataset.customer;
+            const chosen = parseInt(this.dataset.idx,10);
+            let orders = JSON.parse(localStorage.getItem('orders') || '{}');
+            if (!orders[customer] || !orders[customer][chosen]) {
+                confirmModal.style.display = 'none';
+                return alert('รายการไม่พบ');
+            }
+            // take copy for undo
+            lastDeleted = { customer, item: orders[customer][chosen], idx: chosen };
+            orders[customer].splice(chosen,1);
+            if (orders[customer].length === 0) delete orders[customer];
+            localStorage.setItem('orders', JSON.stringify(orders));
+            confirmModal.style.display = 'none';
+            loadCustomers();
+            // show snackbar with undo
+            snackText.textContent = 'ยกเลิกรายการเรียบร้อย';
+            snackbar.style.display = 'flex';
+            // auto hide after 8s and clear lastDeleted
+            clearTimeout(window._snackTimeout);
+            window._snackTimeout = setTimeout(() => { snackbar.style.display='none'; lastDeleted = null; }, 8000);
+        });
+
+        // undo
+        document.getElementById('undoBtn').addEventListener('click', function(){
+            if (!lastDeleted) return;
+            let orders = JSON.parse(localStorage.getItem('orders') || '{}');
+            if (!orders[lastDeleted.customer]) orders[lastDeleted.customer] = [];
+            // insert back at previous index if possible
+            orders[lastDeleted.customer].splice(lastDeleted.idx, 0, lastDeleted.item);
+            localStorage.setItem('orders', JSON.stringify(orders));
+            snackbar.style.display = 'none';
+            lastDeleted = null;
+            loadCustomers();
+            document.getElementById('opsMsg').textContent = 'คืนค่ารายการเรียบร้อย';
+            setTimeout(()=> document.getElementById('opsMsg').textContent = '', 2000);
+        });
+
+        // Toggle edit mode: show tiny edit buttons (client-side only)
+        let editMode = false;
+        document.getElementById('toggleEditBtn').addEventListener('click', function() {
+            const container = document.getElementById('ordersList');
+            editMode = !editMode;
+            this.textContent = editMode ? 'ออกจากโหมดแก้ไข' : 'เข้าสู่โหมดแก้ไข';
+            // toggle display of edit buttons
+            const btns = container.querySelectorAll('.edit-btn');
+            if (btns.length === 0) {
+                // re-render to ensure buttons exist
+                const select = document.getElementById('selectCustomer');
+                const orders = JSON.parse(localStorage.getItem('orders') || '{}');
+                renderOrders(orders[select.value] || []);
+            }
+            container.querySelectorAll('.edit-btn').forEach(b => { b.style.display = editMode ? 'inline-block' : 'none'; });
+            // show/hide status inputs and wire save handlers (on blur or Enter)
+            container.querySelectorAll('.status-input').forEach(s => {
+                s.style.display = editMode ? 'inline-block' : 'none';
+                if (editMode) {
+                    const idx = parseInt(s.dataset.idx, 10);
+                    const selectCustomer = document.getElementById('selectCustomer').value;
+                    const orders = JSON.parse(localStorage.getItem('orders') || '{}');
+                    const item = (orders[selectCustomer] && orders[selectCustomer][idx]) ? orders[selectCustomer][idx] : null;
+                    if (item && item.status) s.value = item.status;
+
+                    const saveStatus = function(newStatus){
+                        const idx2 = parseInt(s.dataset.idx, 10);
+                        const cust = document.getElementById('selectCustomer').value;
+                        const orders2 = JSON.parse(localStorage.getItem('orders') || '{}');
+                        if (orders2[cust] && orders2[cust][idx2]){
+                            orders2[cust][idx2].status = newStatus || '';
+                            localStorage.setItem('orders', JSON.stringify(orders2));
+                            // update displayed text (safe guard index)
+                            const txts = container.querySelectorAll('.status-text');
+                            if (txts && txts[idx2]) txts[idx2].textContent = newStatus || '';
+                            document.getElementById('opsMsg').textContent = 'บันทึกสถานะเรียบร้อย';
+                            setTimeout(()=> document.getElementById('opsMsg').textContent = '', 2000);
+                        }
+                    };
+
+                    s.addEventListener('blur', function(){ saveStatus(this.value); });
+                    s.addEventListener('keydown', function(ev){ if(ev.key === 'Enter'){ ev.preventDefault(); this.blur(); } });
+                }
+            });
+            // attach edit handlers when enabling
+            if (editMode) {
+                container.querySelectorAll('.edit-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const idx = parseInt(this.getAttribute('data-idx'), 10);
+                        const select = document.getElementById('selectCustomer');
+                        const customer = select.value;
+                        let orders = JSON.parse(localStorage.getItem('orders') || '{}');
+                        const item = orders[customer][idx];
+                        const newName = prompt('แก้ไขชื่อสินค้า:', item.name);
+                        if (newName === null) return;
+                        item.name = newName;
+                        orders[customer][idx] = item;
+                        localStorage.setItem('orders', JSON.stringify(orders));
+                        renderOrders(orders[customer] || []);
+                        document.getElementById('opsMsg').textContent = 'บันทึกการแก้ไขแล้ว';
+                        setTimeout(() => document.getElementById('opsMsg').textContent = '', 2000);
+                    });
+                });
+            }
+        });
+
+        // initial load
+        loadCustomers();
+    </script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ติดตามพัสดุ</title>
+    <link rel="stylesheet" href="main.css">
+    <style>
+        .details { display:flex; gap:12px; align-items:center; margin-bottom:12px }
+        .details .box { background:linear-gradient(180deg,#fff,#fbfdff); padding:12px; border-radius:10px; box-shadow:0 8px 24px rgba(2,6,23,0.04); }
+        .timeline { display:flex; flex-direction:column; gap:12px; }
+        .timeline .event { display:flex; gap:12px; align-items:flex-start; }
+        .timeline .dot { width:12px; height:12px; border-radius:50%; background:var(--primary); margin-top:6px }
+        .share-row { display:flex; gap:8px; align-items:center; margin-top:12px }
+    </style>
+</head>
+<body>
+    <div class="order-bg">
+        <div class="order-container admin-container">
+            <h2 class="admin-title">สถานะพัสดุ</h2>
+
+            <div id="notFoundMsg" style="display:none; text-align:center; color:#ef4444; font-weight:700; margin-bottom:12px"></div>
+
+            <div id="mainContent">
+                <div class="details">
+                    <div class="box" style="flex:1">
+                        <div style="font-weight:700">หมายเลขติดตาม</div>
+                        <div id="tn" style="font-size:1.05rem; color:#374151"></div>
+                    </div>
+                    <div class="box" style="width:160px; text-align:center">
+                        <div style="font-weight:700">ผู้ให้บริการ</div>
+                        <div id="carrier" style="color:#374151">-</div>
+                    </div>
+                </div>
+
+                <div style="margin-top:6px; display:flex; gap:10px; align-items:center;">
+                    <div style="flex:1">
+                        <div style="font-weight:700">สถานะปัจจุบัน</div>
+                        <div id="currentStatus" style="font-size:1.05rem; color:#111827; font-weight:700; margin-top:6px">-</div>
+                    </div>
+                    <div style="width:220px; text-align:right">
+                        <div class="share-row">
+                            <button id="copyLink" class="admin-btn small">คัดลอกลิงก์แชร์</button>
+                            <button id="shareFb" class="admin-btn small" type="button">แชร์ FB</button>
+                            <button id="shareX" class="admin-btn small" type="button">แชร์ X</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top:16px">
+                    <div style="font-weight:700; margin-bottom:8px">Timeline</div>
+                    <div id="timeline" class="timeline"></div>
+                </div>
+
+                <div style="margin-top:14px">
+                    <div style="font-weight:700">รายละเอียดพัสดุ</div>
+                    <div id="detailsBox" style="margin-top:8px"></div>
+                </div>
+
+                <div style="margin-top:14px">
+                    <div style="font-weight:700">การแจ้งเตือน</div>
+                    <div style="display:flex; gap:8px; margin-top:8px; align-items:center">
+                        <input id="notifyEmail" placeholder="อีเมลสำหรับแจ้งเตือน" class="admin-input" style="flex:1; height:40px" />
+                        <button id="subEmail" class="admin-btn small">สมัคร</button>
+                    </div>
+                    <div id="subMsg" class="admin-msg" style="margin-top:8px"></div>
+                </div>
+
+                <div style="margin-top:18px">
+                    <div style="font-weight:700">ประวัติการค้นหา (เครื่องนี้)</div>
+                    <div id="historyList" style="margin-top:8px"></div>
+                </div>
+
+                <div style="margin-top:18px; display:flex; gap:8px; justify-content:flex-end">
+                    <button class="admin-btn back-btn" onclick="window.location.href='index.html'">กลับ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // read params
+        const params = new URLSearchParams(window.location.search);
+        const tn = params.get('tn') || params.get('tracking') || '';
+        const carrier = params.get('carrier') || '';
+        const elTN = document.getElementById('tn');
+        const elCarrier = document.getElementById('carrier');
+        const notFound = document.getElementById('notFoundMsg');
+        const mainContent = document.getElementById('mainContent');
+
+        if(!tn) {
+            notFound.style.display = 'block';
+            notFound.textContent = 'ไม่พบหมายเลขติดตาม กรุณากลับไปยังหน้าหลักแล้วกรอกหมายเลข';
+            mainContent.style.display = 'none';
+        } else {
+            elTN.textContent = tn;
+            elCarrier.textContent = carrier || 'ไม่ระบุ';
+            // For MVP, generate mock timeline and details
+            const now = Date.now();
+            const steps = ['รับเข้า', 'เคลื่อนย้าย', 'อยู่คลัง', 'กำลังจัดส่ง', 'ส่งมอบ'];
+            // pick a random progress based on tn hash for deterministic mock
+            function hash(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h<<5)-h + s.charCodeAt(i); h|=0;} return Math.abs(h); }
+            const h = hash(tn);
+            const progress = h % steps.length; // index of latest event
+            const timeline = document.getElementById('timeline');
+            timeline.innerHTML = '';
+            for(let i=0;i<=progress;i++){
+                const when = new Date(now - (progress - i)*1000*60*60*24).toLocaleString();
+                const ev = document.createElement('div'); ev.className='event';
+                ev.innerHTML = `<div class="dot"></div><div><div style="font-weight:700">${steps[i]}</div><div style="color:var(--muted);">${when}</div></div>`;
+                timeline.appendChild(ev);
+            }
+            document.getElementById('currentStatus').textContent = steps[progress];
+
+            // details box (mock)
+            const details = document.getElementById('detailsBox');
+            details.innerHTML = `
+                <div style="display:flex; gap:10px; flex-wrap:wrap">
+                    <div style="min-width:160px">สถานะ: <strong>${steps[progress]}</strong></div>
+                    <div style="min-width:160px">วันที่คาดถึง: <strong>${new Date(now + (3-progress)*24*60*60*1000).toLocaleDateString()}</strong></div>
+                </div>
+                <div style="margin-top:8px; color:var(--muted)">ที่อยู่ต้นทาง / ปลายทาง: (ซ่อนบางส่วนสำหรับสาธารณะ)</div>
+            `;
+
+            // share link
+            const shareUrl = location.origin + location.pathname + '?tn=' + encodeURIComponent(tn) + (carrier? '&carrier='+encodeURIComponent(carrier): '');
+            document.getElementById('copyLink').addEventListener('click', async function(){
+                try{ await navigator.clipboard.writeText(shareUrl); alert('คัดลอกลิงก์แชร์เรียบร้อย'); }catch(e){ prompt('คัดลอกลิงก์นี้', shareUrl); }
+            });
+            document.getElementById('shareFb').addEventListener('click', function(){
+                const u = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(shareUrl);
+                window.open(u, '_blank', 'noopener');
+            });
+            document.getElementById('shareX').addEventListener('click', function(){
+                const u = 'https://x.com/intent/tweet?url=' + encodeURIComponent(shareUrl) + '&text=' + encodeURIComponent('เช็กสถานะพัสดุ');
+                window.open(u, '_blank', 'noopener');
+            });
+
+            // history
+            const hist = JSON.parse(localStorage.getItem('trackingHistory') || '[]');
+            const histEl = document.getElementById('historyList');
+            if(hist.length===0) histEl.textContent = 'ยังไม่มีการค้นหา'; else {
+                histEl.innerHTML = hist.map(h=>`<div style="display:flex;justify-content:space-between; padding:8px 6px; border-radius:8px; background:#fff; margin-bottom:6px"><div><strong>${h.tn}</strong><div style="color:var(--muted); font-size:0.95rem">${h.carrier||'-'}</div></div><div><a href="track.html?tn=${encodeURIComponent(h.tn)}&carrier=${encodeURIComponent(h.carrier||'')}">ดู</a></div></div>`).join('');
+            }
+
+            // subscribe email (store locally)
+            document.getElementById('subEmail').addEventListener('click', function(){
+                const email = document.getElementById('notifyEmail').value.trim();
+                if(!email) { document.getElementById('subMsg').textContent = 'กรุณากรอกอีเมล'; return; }
+                const subs = JSON.parse(localStorage.getItem('trackingSubs') || '{}');
+                if(!subs[tn]) subs[tn]=[];
+                subs[tn].push({ type:'email', value:email, time:Date.now() });
+                localStorage.setItem('trackingSubs', JSON.stringify(subs));
+                document.getElementById('subMsg').textContent = 'สมัครรับแจ้งเตือนเรียบร้อย (ตัวอย่าง local)';
+                setTimeout(()=> document.getElementById('subMsg').textContent='', 3000);
+                document.getElementById('notifyEmail').value='';
+            });
+        }
+    </script>
+</body>
+</html>

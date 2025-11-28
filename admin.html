@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เพิ่มข้อมูลสินค้า (Admin)</title>
+    <link rel="stylesheet" href="main.css">
+    <style>
+        .back-btn {
+            margin-top: 10px;
+            background: #f3f4f6;
+            color: #374151;
+            border: 1.5px solid #a5b4fc;
+            transition: background 0.2s, color 0.2s;
+        }
+        .back-btn:hover {
+            background: #6366f1;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="order-bg">
+        <div class="order-container admin-container">
+            <h2 class="admin-title">เพิ่มข้อมูลสินค้าของลูกค้า</h2>
+            <form id="productForm" class="admin-form">
+                <input type="text" id="customerName" class="admin-input" placeholder="ชื่อลูกค้า" required>
+                <input type="text" id="productName" class="admin-input" placeholder="ชื่อสินค้า" required>
+                <input type="url" id="productLink" class="admin-input" placeholder="ลิ้งค์สินค้า" required>
+                <input type="file" id="productImg" class="admin-input" accept="image/*">
+                <div style="width:100%; display:flex; justify-content:center; margin-top:6px;">
+                    <img id="previewImg" src="https://via.placeholder.com/96" alt="preview" style="width:96px; height:96px; object-fit:cover; border-radius:10px; border:1px solid rgba(99,102,241,0.12); background:#fff;" />
+                </div>
+                <button type="submit" class="admin-btn">บันทึกสินค้า</button>
+            </form>
+            <div id="saveMsg" class="admin-msg"></div>
+            <div style="display:flex; gap:10px; margin-top:12px;">
+                <button type="button" class="admin-btn back-btn" onclick="window.location.href='index.html'">กลับไปหน้าแรก</button>
+                <button type="button" class="admin-btn back-btn" onclick="window.location.href='admin-ops.html'">ไปยังแผงจัดการ</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // บันทึกข้อมูลสินค้าใน localStorage
+        document.getElementById('productForm').onsubmit = function(e) {
+            e.preventDefault();
+            const customer = document.getElementById('customerName').value.trim();
+            const name = document.getElementById('productName').value.trim();
+            const link = document.getElementById('productLink').value.trim();
+            const fileInput = document.getElementById('productImg');
+            const file = fileInput.files[0];
+
+            function saveOrder(img) {
+                let orders = JSON.parse(localStorage.getItem('orders') || '{}');
+                if (!orders[customer]) orders[customer] = [];
+                orders[customer].push({ name, link, img });
+                localStorage.setItem('orders', JSON.stringify(orders));
+                const saveMsg = document.getElementById('saveMsg');
+                saveMsg.textContent = 'บันทึกข้อมูลสำเร็จ!';
+                saveMsg.classList.add('fade-in');
+                document.getElementById('productForm').reset();
+                // reset preview
+                document.getElementById('previewImg').src = 'https://via.placeholder.com/96';
+                setTimeout(() => {
+                    saveMsg.textContent = '';
+                    saveMsg.classList.remove('fade-in');
+                }, 2000);
+            }
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    saveOrder(evt.target.result);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                saveOrder('https://via.placeholder.com/100');
+            }
+        }
+
+        // preview selected image
+        document.getElementById('productImg').addEventListener('change', function(e){
+            const f = this.files[0];
+            if(!f) return;
+            const r = new FileReader();
+            r.onload = function(ev){ document.getElementById('previewImg').src = ev.target.result; };
+            r.readAsDataURL(f);
+        });
+    </script>
+</body>
+</html>
